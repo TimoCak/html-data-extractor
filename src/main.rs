@@ -5,6 +5,6 @@ use html_data_extractor::{website::website_def::Website, create_initial_dir};
 async fn main() {
     create_initial_dir().unwrap();
     let website = Website::new("https://youtu.be/6Mopunhrtgo").await; 
-    println!("{:?}", website.text);
-
+    //println!("{:?}", website.text);
+    println!("{:?}", website.search_for_files(".jpg").get(0).unwrap());
 }

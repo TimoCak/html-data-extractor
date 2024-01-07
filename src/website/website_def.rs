@@ -29,11 +29,21 @@ impl Website {
         }
     }
 
+    pub fn search_for_files(self, query: &str) -> Vec<String> {
+        let mut result = vec![];
+    
+        for line in self.text.lines() {
+            if line.contains(query) {
+                result.push(line.to_string());
+            }
+        }
+        result
+    } 
+
 
 }
 
-async fn request_webpage(url: &str) -> String {
-    
+async fn request_webpage(url: &str) -> String { 
     let resp = reqwest::get(url)
         .await
         .unwrap()
