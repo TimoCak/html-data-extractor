@@ -59,8 +59,10 @@ impl Website {
                     .output()
                     .expect("failed to execute process");
             } else {
+                let script_path = format!("output/{}/{}.sh", self.dir, file.0.replace("/", "%"));
+                fs::write(&script_path, format!("#!/bin/sh\nwget -O {} {}", &path, &build_url)).expect("should create executable sh script!");
                 Command::new("sh")
-                    .args([format!("curl -o {} {}", &path, &build_url)])
+                    .args([format!("./{}", &script_path)])
                     .output()
                     .expect("failed to execute process");
             };
