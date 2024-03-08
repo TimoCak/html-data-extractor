@@ -17,7 +17,6 @@ impl Website {
         let dir = create_folder(url).unwrap();
         create_html_file(&dir, &text).unwrap();
 
-        //need to implement
         let timestamp = String::default();
         let files = vec![];
 
@@ -60,14 +59,14 @@ impl Website {
                     .output()
                     .expect("failed to execute process");
             } else {
-                Command::new("sh")
+                Command::new("bash")
                     .arg(format!("wget -O {} {}", &path, &build_url))
                     .output()
                     .expect("failed to execute process");
             };
             println!(
                 "File Location: {}",
-                format!("A:/MeineProgramme/html-data-extractro/{}", &path)
+                format!("A:/MeineProgramme/html-data-extractor/{}", &path)
             );
         }
     }
