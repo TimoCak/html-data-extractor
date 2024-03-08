@@ -59,9 +59,8 @@ impl Website {
                     .output()
                     .expect("failed to execute process");
             } else {
-                println!("linux!!");
                 Command::new("sh")
-                    .args([format!("wget -O {} {}", &path, &build_url)])
+                    .args([format!("curl -o {} {}", &path, &build_url)])
                     .output()
                     .expect("failed to execute process");
             };
