@@ -64,7 +64,7 @@ impl Website {
                     .output()
                     .expect("failed to execute process");
             };
-            println!("File Location: {}", format!("{}", &path));
+            println!("{:?}", &output);
         }
     }
 }
