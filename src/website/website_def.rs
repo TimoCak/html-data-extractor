@@ -1,19 +1,20 @@
-use super::file_def::FileDef;
+use regex::Regex;
 use std::fs::{self, File};
 use std::io::{Result, Write};
+use std::process::Command;
 
 pub struct Website {
     pub url: String,
     pub dir: String,
-    pub files: Vec<FileDef>,
+    pub files: Vec<(String, String)>,
     pub timestamp: String,
     pub text: String,
 }
 
 impl Website {
     pub async fn new(url: &str) -> Website {
-        let text = request_webpage(&url).await;
-        let dir = create_folder(&url).unwrap();
+        let text = request_webpage(url).await;
+        let dir = create_folder(url).unwrap();
         create_html_file(&dir, &text).unwrap();
 
         //need to implement
@@ -29,33 +30,54 @@ impl Website {
         }
     }
 
-    pub fn search_for_files(self, query: &str) -> Vec<String> {
-        let mut result = vec![];
-    
-        for line in self.text.lines() {
-            if line.contains(query) {
-                result.push(line.to_string());
-            }
+    pub fn search_for_files(&mut self) {
+        let regex = Regex::new(r#"<img\s+[^>]*?src=[\'"]([^\'"\s]+)\.(jpg|jpeg|png)["\']"#).unwrap();
+
+        for (_, [file_name, file_type]) in regex.captures_iter(&self.text).map(|c| c.extract()) {
+            
+            /* let mut file_type_chars = file_type.chars();
+
+            let mut file_type_end = String::default();
+            file_type_end.push(file_type_chars.next().unwrap());
+            file_type_end.push(file_type_chars.next().unwrap());
+            file_type_end.push(file_type_chars.next().unwrap()); */
+            
+            self.files
+                .push((file_name.to_string(), file_type.to_string()));
         }
-        result
-    } 
+    }
 
-
+    pub async fn request_files(&self) {
+        for file in &self.files {
+            let build_url = format!("{}{}.{}", self.url, file.0, file.1);
+            let path = format!("output/{}/{}.{}", self.dir, file.0.replace("/", "%"), file.1);
+            
+            println!("{}", &build_url);
+            let output = if cfg!(target_os = "windows") {
+                Command::new("powershell")
+                    .args([format!("Invoke-Webrequest {} -OutFile {}", build_url, &path)])
+                    .output()
+                    .expect("failed to execute process");
+            } else {
+                /* Command::new("sh")
+                    .arg(format!("./chunk/{}/output/script.sh", timestamp))
+                    .output()
+                    .expect("failed to execute process"); */
+            };
+            println!("File Location: {}", format!("A:/MeineProgramme/html-data-extractro/{}", &path));
+        }
+    }
 }
 
-async fn request_webpage(url: &str) -> String { 
-    let resp = reqwest::get(url)
-        .await
-        .unwrap()
-        .text()
-        .await
-        .unwrap();
-
+async fn request_webpage(url: &str) -> String {
+    let resp = reqwest::get(url).await.unwrap().text().await.unwrap();
     resp
 }
 
 fn create_folder(url: &str) -> Result<String> {
-    let folder_name = url.replace(".", "%").replace("/", "!");
+    let folder_name = url.replace(".", "%").replace("/", "%").replace(":", "%").replace("&", "%").replace("?", "%");
+
+    println!("{}", &folder_name);
     fs::create_dir_all(format!("output/{}", folder_name))?;
     Ok(folder_name)
 }

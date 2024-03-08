@@ -1,10 +1,14 @@
 use html_data_extractor::{website::website_def::Website, create_initial_dir};
+use std::env;
 
 /* url is user input */
 #[tokio::main]
 async fn main() {
+    let args: Vec<String> = env::args().collect();
+    let url = &args[1];
     create_initial_dir().unwrap();
-    let website = Website::new("https://youtu.be/6Mopunhrtgo").await; 
+    let mut website = Website::new(url).await; 
     //println!("{:?}", website.text);
-    println!("{:?}", website.search_for_files(".jpg").get(0).unwrap());
+    website.search_for_files();
+    website.request_files().await;
 }
