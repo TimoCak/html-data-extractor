@@ -60,7 +60,7 @@ impl Website {
                     .expect("failed to execute process");
             } else {
                 Command::new("bash")
-                    .arg(format!("wget -O {} {}", &path, &build_url))
+                    .arg(format!("sudo wget -O {} {}", &path, &build_url))
                     .output()
                     .expect("failed to execute process");
             };
