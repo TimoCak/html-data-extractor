@@ -31,7 +31,7 @@ impl Website {
 
     pub fn search_for_files(&mut self) {
         let regex =
-            Regex::new(r#"<img\s+[^>]*?src=[\'"]([^\'"\s]+)\.(jpg|jpeg|png)["\']"#).unwrap();
+            Regex::new(r#"<img\s+[^>]*?src=[\'"]([^\'"\s]+)\.(jpg|jpeg|png|webp|svg)["\']"#).unwrap_or_else(|_| panic!("Invalid regex"));
 
         for (_, [file_name, file_type]) in regex.captures_iter(&self.text).map(|c| c.extract()) {
             self.files
@@ -41,15 +41,18 @@ impl Website {
 
     pub async fn request_files(&self) {
         for file in &self.files {
-            let build_url = format!("{}{}.{}", self.url, file.0, file.1);
+            let mut build_url = format!("{}{}.{}", self.url, file.0, file.1);
+
+            if file.0.contains("https") || file.0.contains("http") {
+                build_url = format!("{}.{}", file.0, file.1);
+            }
+
             let path = format!(
                 "output/{}/{}.{}",
                 self.dir,
                 file.0.replace("/", "%"),
                 file.1
             );
-
-            println!("{}", &build_url);
             let output = if cfg!(target_os = "windows") {
                 Command::new("powershell")
                     .args([format!(
@@ -60,12 +63,17 @@ impl Website {
                     .expect("failed to execute process");
             } else {
                 let script_path = format!("output/{}/{}.sh", self.dir, file.0.replace("/", "%"));
-                fs::write(&script_path, format!("#!/bin/sh\nwget -O {} {}", &path, &build_url)).expect("should create executable sh script!");
+                fs::write(
+                    &script_path,
+                    format!("#!/bin/sh\nwget -O {} {}", &path, &build_url),
+                )
+                .expect("should create executable sh script!");
                 Command::new("sh")
                     .args([format!("./{}", &script_path)])
                     .output()
                     .expect("failed to execute process");
             };
+            println!("{}", &build_url);
             println!("{}", &path);
         }
     }
