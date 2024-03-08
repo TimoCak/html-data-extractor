@@ -31,17 +31,10 @@ impl Website {
     }
 
     pub fn search_for_files(&mut self) {
-        let regex = Regex::new(r#"<img\s+[^>]*?src=[\'"]([^\'"\s]+)\.(jpg|jpeg|png)["\']"#).unwrap();
+        let regex =
+            Regex::new(r#"<img\s+[^>]*?src=[\'"]([^\'"\s]+)\.(jpg|jpeg|png)["\']"#).unwrap();
 
         for (_, [file_name, file_type]) in regex.captures_iter(&self.text).map(|c| c.extract()) {
-            
-            /* let mut file_type_chars = file_type.chars();
-
-            let mut file_type_end = String::default();
-            file_type_end.push(file_type_chars.next().unwrap());
-            file_type_end.push(file_type_chars.next().unwrap());
-            file_type_end.push(file_type_chars.next().unwrap()); */
-            
             self.files
                 .push((file_name.to_string(), file_type.to_string()));
         }
@@ -50,21 +43,32 @@ impl Website {
     pub async fn request_files(&self) {
         for file in &self.files {
             let build_url = format!("{}{}.{}", self.url, file.0, file.1);
-            let path = format!("output/{}/{}.{}", self.dir, file.0.replace("/", "%"), file.1);
-            
+            let path = format!(
+                "output/{}/{}.{}",
+                self.dir,
+                file.0.replace("/", "%"),
+                file.1
+            );
+
             println!("{}", &build_url);
             let output = if cfg!(target_os = "windows") {
                 Command::new("powershell")
-                    .args([format!("Invoke-Webrequest {} -OutFile {}", build_url, &path)])
+                    .args([format!(
+                        "Invoke-Webrequest {} -OutFile {}",
+                        &build_url, &path
+                    )])
                     .output()
                     .expect("failed to execute process");
             } else {
-                /* Command::new("sh")
-                    .arg(format!("./chunk/{}/output/script.sh", timestamp))
+                Command::new("sh")
+                    .arg(format!("wget -O {} {}", &path, &build_url))
                     .output()
-                    .expect("failed to execute process"); */
+                    .expect("failed to execute process");
             };
-            println!("File Location: {}", format!("A:/MeineProgramme/html-data-extractro/{}", &path));
+            println!(
+                "File Location: {}",
+                format!("A:/MeineProgramme/html-data-extractro/{}", &path)
+            );
         }
     }
 }
@@ -75,7 +79,12 @@ async fn request_webpage(url: &str) -> String {
 }
 
 fn create_folder(url: &str) -> Result<String> {
-    let folder_name = url.replace(".", "%").replace("/", "%").replace(":", "%").replace("&", "%").replace("?", "%");
+    let folder_name = url
+        .replace(".", "%")
+        .replace("/", "%")
+        .replace(":", "%")
+        .replace("&", "%")
+        .replace("?", "%");
 
     println!("{}", &folder_name);
     fs::create_dir_all(format!("output/{}", folder_name))?;
