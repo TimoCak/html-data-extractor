@@ -62,7 +62,7 @@ impl Website {
                     .output()
                     .expect("failed to execute process");
             } else {
-                let script_path = format!("output/{}/{}.sh", self.dir, file.0.replace("/", "%"));
+                let script_path = format!("output/{}/script.sh", self.dir);
                 fs::write(
                     &script_path,
                     format!("#!/bin/sh\nwget -O {} {}", &path, &build_url),
